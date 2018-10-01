@@ -1,143 +1,125 @@
 import 'package:flutter/material.dart';
-import 'package:transparent_image/transparent_image.dart';
+import 'package:scoped_model/scoped_model.dart';
 import 'dart:io';
 import 'dart:convert';
 
-
-void main() => runApp(new MyApp());
+void main() {
+  runApp(MyApp(
+    model: CounterModel(),
+  ));
+}
 
 class MyApp extends StatelessWidget {
-  // This widget is the root of your application.
+  final CounterModel model;
+
+  const MyApp({Key key, @required this.model}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
-    return new MaterialApp(
-      title: 'Flutter Demo',
-      theme: new ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or press Run > Flutter Hot Reload in IntelliJ). Notice that the
-        // counter didn't reset back to zero; the application is not restarted.
-        primarySwatch: Colors.blue,
+    // At the top level of our app, we'll, create a ScopedModel Widget. This
+    // will provide the CounterModel to all children in the app that request it
+    // using a ScopedModelDescendant.
+    return ScopedModel<CounterModel>(
+      model: model,
+      child: MaterialApp(
+        title: 'Scoped Model Demo',
+        home: CounterHome('Scoped Model Demo'),
       ),
-      home: new MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+// Start by creating a class that has a counter and a method to increment it.
+//
+// Note: It must extend from Model.
+class CounterModel extends Model {
+  int _counter = 0;
+  dynamic _url = "http://www.google.de/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png";
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
+  int get counter => _counter;
+  dynamic get urlget => _url;
+  List<String> _imagesToLabel = [];
 
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
-  final String title;
+  CounterModel() {
+    HttpClient()
+    .getUrl(Uri.parse('https://raw.githubusercontent.com/uchidalab/book-dataset/master/Task1/book30-listing-train.csv')) // produces a request object
+    .then((request) => request.close()) // sends the request
+    .then((HttpClientResponse response) {
+          response.transform(utf8.decoder).transform(new LineSplitter()).listen(
+		(line) {
+      List<String> ll = line.split(',');
+      _imagesToLabel.add(ll[2]);
+      },
+		onError:(err) => print('my bad $err')
+	  );
+      },
+    );  
+  }
 
-  @override
-  _MyHomePageState createState() => new _MyHomePageState();
+
+  void increment() {
+    // First, increment the counter
+    _counter++;
+
+    _url = _imagesToLabel[_counter];
+
+    // Then notify all the listeners.
+    notifyListeners();
+  }
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-  String _image_opinion = 'Dont know what you think';
+class CounterHome extends StatelessWidget {
+  final String title;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
-  }
+  CounterHome(this.title);
 
-  void _setCounterLabelGood() {
-    setState(() {
-          _image_opinion = "Like it!";
-          _counter++;
-        });
-  }
-    void _setCounterLabelBad() {
-    setState(() {
-          _image_opinion = "Bleh!";
-          _counter++;
-        });
-  }
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
-    return new Scaffold(
-      appBar: new AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: new Text(widget.title),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title),
       ),
-      body: new Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: new Column(
-          // Column is also layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug paint" (press "p" in the console where you ran
-          // "flutter run", or select "Toggle Debug Paint" from the Flutter tool
-          // window in IntelliJ) to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
+      body: Center(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            new Text(
-              "$_image_opinion",
-              style: Theme.of(context).textTheme.display1,
+            Text('You have pushed the button this many times:'),
+            // Create a ScopedModelDescendant. This widget will get the
+            // CounterModel from the nearest parent ScopedModel<CounterModel>.
+            // It will hand that CounterModel to our builder method, and
+            // rebuild any time the CounterModel changes (i.e. after we
+            // `notifyListeners` in the Model).
+            ScopedModelDescendant<CounterModel>(
+              builder: (context, child, model) {
+                return Text(
+                  model.counter.toString(),
+                  style: Theme.of(context).textTheme.display1,
+                );
+              },
             ),
-            new Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.display1,
-            ),
-            //new Image.network('http://www.google.de/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png'),
-            new Image.network('https://github.com/flutter/website/blob/master/src/_includes/code/layout/lakes/images/lake.jpg?raw=true'),
+	    ScopedModelDescendant<CounterModel>(
+              builder: (context, child, model) {
+                String imageUrl = model.urlget.toString();
+                imageUrl = imageUrl.substring(1,imageUrl.length-1);
+                return new Image.network(imageUrl);
+	            },
+	    ),
+
           ],
         ),
       ),
-
-      floatingActionButton: Row( 
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: <Widget> [
-         new FloatingActionButton(
-              onPressed: _setCounterLabelBad,
-              tooltip: 'Increment',
-              child: new Icon(Icons.trending_down),
-            ),
-          new FloatingActionButton(
-              onPressed: _setCounterLabelGood,
-              tooltip: 'Add',
-              child: new Icon(Icons.trending_up),
-            ),
-          
-        ]
-        
+      // Use the ScopedModelDescendant again in order to use the increment
+      // method from the CounterModel
+      floatingActionButton: ScopedModelDescendant<CounterModel>(
+        builder: (context, child, model) {
+          return FloatingActionButton(
+            onPressed: model.increment,
+            tooltip: 'Increment',
+            child: Icon(Icons.add),
+          );
+        },
       ),
-       // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }

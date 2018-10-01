@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:transparent_image/transparent_image.dart';
+import 'dart:io';
+import 'dart:convert';
+
 
 void main() => runApp(new MyApp());
 
@@ -45,7 +48,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
-  //String image_opinion = 'Dont know what you think'
+  String _image_opinion = 'Dont know what you think';
 
   void _incrementCounter() {
     setState(() {
@@ -58,6 +61,18 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _setCounterLabelGood() {
+    setState(() {
+          _image_opinion = "Like it!";
+          _counter++;
+        });
+  }
+    void _setCounterLabelBad() {
+    setState(() {
+          _image_opinion = "Bleh!";
+          _counter++;
+        });
+  }
   @override
   Widget build(BuildContext context) {
     // This method is rerun every time setState is called, for instance as done
@@ -92,7 +107,8 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             new Text(
-              'You have pushed the button this many times:',
+              "$_image_opinion",
+              style: Theme.of(context).textTheme.display1,
             ),
             new Text(
               '$_counter',
@@ -105,17 +121,17 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
 
       floatingActionButton: Row( 
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: <Widget> [
          new FloatingActionButton(
-              onPressed: _incrementCounter,
+              onPressed: _setCounterLabelBad,
               tooltip: 'Increment',
-              child: new Icon(Icons.favorite),
+              child: new Icon(Icons.trending_down),
             ),
           new FloatingActionButton(
-              onPressed: _incrementCounter,
+              onPressed: _setCounterLabelGood,
               tooltip: 'Add',
-              child: new Icon(Icons.add),
+              child: new Icon(Icons.trending_up),
             ),
           
         ]
