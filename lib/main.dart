@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:scoped_model/scoped_model.dart';
 import 'dart:io';
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   runApp(MyApp(
@@ -22,8 +23,8 @@ class MyApp extends StatelessWidget {
     return ScopedModel<CounterModel>(
       model: model,
       child: MaterialApp(
-        title: 'Scoped Model Demo',
-        home: CounterHome('Scoped Model Demo'),
+        title: 'Image Labeler Demo',
+        home: CounterHome('Image Labeler Demo'),
       ),
     );
   }
@@ -40,8 +41,19 @@ class CounterModel extends Model {
   dynamic get urlget => _url;
   List<String> _imagesToLabel = [];
 
+  
 
   CounterModel() {
+    //Firestore db = Firestore.instance;
+    //CollectionReference notesCollectionRef = db.collection('baby');
+    //QuerySnapshot querySnapshot = await notesCollectionRef.getDocuments();
+    //print(querySnapshot);
+    //    print(notesCollectionRef.toString());
+    print("** CounterModel printing ****");
+    Firestore.instance.collection("baby").snapshots().listen((snapshot) 
+    { snapshot.documents.forEach((doc) => debugPrint("debugger "+doc.data.toString()));
+    });
+
     HttpClient()
     .getUrl(Uri.parse('https://raw.githubusercontent.com/uchidalab/book-dataset/master/Task1/book30-listing-train.csv')) // produces a request object
     .then((request) => request.close()) // sends the request
@@ -51,7 +63,7 @@ class CounterModel extends Model {
       List<String> ll = line.split(',');
       _imagesToLabel.add(ll[2]);
       },
-		onError:(err) => print('my bad $err')
+		onError:(err) {print('my bad $err');print('duplicate my bad $err');},
 	  );
       },
     );  
@@ -63,6 +75,28 @@ class CounterModel extends Model {
     _counter++;
 
     _url = _imagesToLabel[_counter];
+
+    // crap code to test firebase document add
+    /*
+    Map<String, Object> newRec = {
+      'name': 'cassie2',
+      'votes':5,
+    };
+    Firestore.instance.collection("baby").add(newRec).then((doc) {
+      print("check that new record added");
+      doc.setData(newRec);
+    });
+    */
+
+    // add the image URL and dummy counter to collection\
+    Map<String, Object> labeledImageRec = {
+      'image_handle': _url,
+      'votes':_counter,
+    };
+    Firestore.instance.collection("baby").add(labeledImageRec).then((doc) {
+      print("check that new record added");
+      doc.setData(labeledImageRec);
+    });
 
     // Then notify all the listeners.
     notifyListeners();
