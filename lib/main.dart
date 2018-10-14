@@ -76,18 +76,6 @@ class CounterModel extends Model {
 
     _url = _imagesToLabel[_counter];
 
-    // crap code to test firebase document add
-    /*
-    Map<String, Object> newRec = {
-      'name': 'cassie2',
-      'votes':5,
-    };
-    Firestore.instance.collection("baby").add(newRec).then((doc) {
-      print("check that new record added");
-      doc.setData(newRec);
-    });
-    */
-
     // add the image URL and dummy counter to collection\
     Map<String, Object> labeledImageRec = {
       'image_handle': _url,
@@ -100,8 +88,51 @@ class CounterModel extends Model {
 
     // Then notify all the listeners.
     notifyListeners();
+
   }
+
+
+  void setCounterLabelDislike() {
+    _url = _imagesToLabel[_counter];
+
+    Map<String, Object> labeledImageRec = {
+        'image_handle': _url,
+        'vote':"Dislike",
+    };
+
+    Firestore.instance.collection("labeledSet").add(labeledImageRec).then((doc) {
+      print("check that new record added");
+      doc.setData(labeledImageRec);
+    });
+
+    _counter++;
+
+    notifyListeners();
+
+  }
+
+    void setCounterLabelLike() {
+    _url = _imagesToLabel[_counter];
+
+    Map<String, Object> labeledImageRec = {
+        'image_handle': _url,
+        'vote':"Like",
+    };
+
+    Firestore.instance.collection("labeledSet").add(labeledImageRec).then((doc) {
+      print("check that new record added");
+      doc.setData(labeledImageRec);
+    });
+
+    _counter++;
+
+    notifyListeners();
+
+  }
+
 }
+
+
 
 class CounterHome extends StatelessWidget {
   final String title;
@@ -132,28 +163,42 @@ class CounterHome extends StatelessWidget {
                 );
               },
             ),
-	    ScopedModelDescendant<CounterModel>(
-              builder: (context, child, model) {
-                String imageUrl = model.urlget.toString();
-                imageUrl = imageUrl.substring(1,imageUrl.length-1);
-                return new Image.network(imageUrl);
-	            },
-	    ),
+            ScopedModelDescendant<CounterModel>(
+                    builder: (context, child, model) {
+                      String imageUrl = model.urlget.toString();
+                      imageUrl = imageUrl.substring(1,imageUrl.length-1);
+                      return new Image.network(imageUrl);
+                    },
+            ),
 
           ],
         ),
       ),
-      // Use the ScopedModelDescendant again in order to use the increment
-      // method from the CounterModel
-      floatingActionButton: ScopedModelDescendant<CounterModel>(
-        builder: (context, child, model) {
-          return FloatingActionButton(
-            onPressed: model.increment,
-            tooltip: 'Increment',
-            child: Icon(Icons.add),
-          );
-        },
-      ),
+
+     // adding a comment to fool git
+      floatingActionButton: Row( 
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget> [
+         new ScopedModelDescendant<CounterModel>(
+           builder: (context,child,model){
+            return FloatingActionButton(
+                  onPressed: model.setCounterLabelDislike,
+                  tooltip: 'Dislike',
+                  child: new Icon(Icons.trending_down),
+                );
+           }
+         ),
+          new ScopedModelDescendant<CounterModel>(
+            builder: (context,child,model){
+            return FloatingActionButton(
+                onPressed: model.setCounterLabelLike,
+                tooltip: 'Like',
+                child: new Icon(Icons.trending_up),
+            );
+            }
+          )          
+        ]
+      ),  
     );
   }
 }
